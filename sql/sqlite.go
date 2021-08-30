@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/developerdong/review/conf"
+	"github.com/developerdong/review/fgt"
 	_ "modernc.org/sqlite"
 	"net/url"
 	"time"
@@ -71,6 +72,46 @@ func (s *Sqlite) Add(u *url.URL) error {
 			return err
 		} else {
 			return nil
+		}
+	}
+}
+
+func (s *Sqlite) Review() (*url.URL, error) {
+	if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
+		return nil, err
+	} else {
+		now := time.Now()
+		var minRetrievabilityUrl string
+		var minRetrievability float64
+		for urlRows.Next() {
+			var id int64
+			var u string
+			if err := urlRows.Scan(&id, &u); err != nil {
+				return nil, err
+			} else if recordRows, err := s.db.Query("SELECT time FROM record WHERE url_id=? ORDER BY time;", id); err != nil {
+				return nil, err
+			} else {
+				points := make([]time.Time, 0)
+				for recordRows.Next() {
+					var seconds int64
+					if err := recordRows.Scan(&seconds); err != nil {
+						return nil, err
+					} else {
+						points = append(points, time.Unix(seconds, 0))
+					}
+				}
+				if recordRows.Err() != nil {
+					return nil, recordRows.Err()
+				} else if retrievability := fgt.GetRetrievability(points, now); minRetrievabilityUrl == "" || retrievability < minRetrievability {
+					minRetrievabilityUrl = u
+					minRetrievability = retrievability
+				}
+			}
+		}
+		if urlRows.Err() != nil {
+			return nil, urlRows.Err()
+		} else {
+			return url.Parse(minRetrievabilityUrl)
 		}
 	}
 }

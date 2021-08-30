@@ -11,5 +11,9 @@ func TestSqlite(t *testing.T) {
 		t.Fatal(err)
 	} else if err := s.Add(u); err != nil {
 		t.Error(err)
+	} else if urlNeedReview, err := s.Review(); err != nil {
+		t.Error(err)
+	} else {
+		t.Log(urlNeedReview)
 	}
 }
