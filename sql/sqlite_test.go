@@ -15,5 +15,8 @@ func TestSqlite(t *testing.T) {
 		t.Error(err)
 	} else {
 		t.Log(urlNeedReview)
+		if err := s.Delete(u); err != nil {
+			t.Error(err)
+		}
 	}
 }

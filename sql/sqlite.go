@@ -115,3 +115,23 @@ func (s *Sqlite) Review() (*url.URL, error) {
 		}
 	}
 }
+
+func (s *Sqlite) Delete(u *url.URL) error {
+	if tx, err := s.db.Begin(); err != nil {
+		return err
+	} else if _, err := tx.Exec(
+		"DELETE FROM record WHERE url_id=(SELECT id FROM url WHERE url=?);",
+		u.String(),
+	); err != nil {
+		_ = tx.Rollback()
+		return err
+	} else if _, err := tx.Exec(
+		"DELETE FROM url WHERE url=?;",
+		u.String(),
+	); err != nil {
+		_ = tx.Rollback()
+		return err
+	} else {
+		return tx.Commit()
+	}
+}
