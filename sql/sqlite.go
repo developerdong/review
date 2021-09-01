@@ -14,7 +14,7 @@ const SqliteDriverName = "sqlite"
 
 const tableUrl = `CREATE TABLE IF NOT EXISTS url
 (
-	id	INTEGER	NOT NULL	PRIMARY KEY	AUTOINCREMENT,
+	id	INTEGER	NOT NULL	PRIMARY KEY,
 	url	TEXT	NOT NULL	UNIQUE
 );
 `
