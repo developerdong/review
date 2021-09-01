@@ -3,6 +3,7 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/developerdong/review/conf"
 	"github.com/developerdong/review/fgt"
 	_ "modernc.org/sqlite"
@@ -129,12 +130,15 @@ func (s *Sqlite) Delete(u *url.URL) error {
 	); err != nil {
 		_ = tx.Rollback()
 		return err
-	} else if _, err := tx.Exec(
+	} else if result, err := tx.Exec(
 		"DELETE FROM url WHERE url=?;",
 		u.String(),
 	); err != nil {
 		_ = tx.Rollback()
 		return err
+	} else if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
+		_ = tx.Rollback()
+		return errors.New(fmt.Sprintf("the url %s does not exist in the storage", u.String()))
 	} else {
 		return tx.Commit()
 	}
