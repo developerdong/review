@@ -77,7 +77,9 @@ func (s *Sqlite) Insert(u *url.URL) error {
 }
 
 func (s *Sqlite) Select() (*url.URL, error) {
-	if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
+	if err := s.connect(); err != nil {
+		return nil, err
+	} else if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
 		return nil, err
 	} else {
 		now := time.Now()
@@ -117,7 +119,9 @@ func (s *Sqlite) Select() (*url.URL, error) {
 }
 
 func (s *Sqlite) Delete(u *url.URL) error {
-	if tx, err := s.db.Begin(); err != nil {
+	if err := s.connect(); err != nil {
+		return err
+	} else if tx, err := s.db.Begin(); err != nil {
 		return err
 	} else if _, err := tx.Exec(
 		"DELETE FROM record WHERE url_id=(SELECT id FROM url WHERE url=?);",
