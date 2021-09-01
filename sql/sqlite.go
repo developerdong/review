@@ -49,7 +49,7 @@ func (s *Sqlite) connect() error {
 	}
 }
 
-func (s *Sqlite) Add(u *url.URL) error {
+func (s *Sqlite) Insert(u *url.URL) error {
 	if err := s.connect(); err != nil {
 		return err
 	} else {
@@ -76,7 +76,7 @@ func (s *Sqlite) Add(u *url.URL) error {
 	}
 }
 
-func (s *Sqlite) Review() (*url.URL, error) {
+func (s *Sqlite) Select() (*url.URL, error) {
 	if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
 		return nil, err
 	} else {
