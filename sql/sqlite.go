@@ -2,7 +2,6 @@ package sql
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/developerdong/review/conf"
 	"github.com/developerdong/review/fgt"
@@ -35,7 +34,7 @@ type Sqlite struct {
 // and creates the needed tables if not exist.
 func (s *Sqlite) connect() error {
 	if driverName := conf.GetEnv(conf.DriverName); driverName != SqliteDriverName {
-		return errors.New("the database should be sqlite")
+		return fmt.Errorf("the database should be sqlite")
 	} else if db, err := sql.Open(SqliteDriverName, conf.GetEnv(conf.DataSourceName)); err != nil {
 		return err
 	} else if err := db.Ping(); err != nil {
@@ -138,7 +137,7 @@ func (s *Sqlite) Delete(u *url.URL) error {
 		return err
 	} else if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
 		_ = tx.Rollback()
-		return errors.New(fmt.Sprintf("the url %s does not exist in the storage", u.String()))
+		return fmt.Errorf("the url %s does not exist in the storage", u.String())
 	} else {
 		return tx.Commit()
 	}
