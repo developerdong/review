@@ -38,10 +38,13 @@ func (s *Sqlite) connect() error {
 	} else if db, err := sql.Open(SqliteDriverName, conf.GetEnv(conf.DataSourceName)); err != nil {
 		return err
 	} else if err := db.Ping(); err != nil {
+		_ = db.Close()
 		return err
 	} else if _, err := db.Exec(tableUrl); err != nil {
+		_ = db.Close()
 		return err
 	} else if _, err := db.Exec(tableRecord); err != nil {
+		_ = db.Close()
 		return err
 	} else {
 		s.db = db
@@ -49,10 +52,15 @@ func (s *Sqlite) connect() error {
 	}
 }
 
+func (s *Sqlite) close() {
+	_ = s.db.Close()
+}
+
 func (s *Sqlite) Insert(u *url.URL) error {
 	if err := s.connect(); err != nil {
 		return err
 	} else {
+		defer s.close()
 		var urlId uint32
 		if _, err := s.db.Exec(
 			"INSERT OR IGNORE INTO url (url) VALUES (?);",
@@ -79,41 +87,44 @@ func (s *Sqlite) Insert(u *url.URL) error {
 func (s *Sqlite) Select() (*url.URL, error) {
 	if err := s.connect(); err != nil {
 		return nil, err
-	} else if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
-		return nil, err
 	} else {
-		now := time.Now()
-		var minRetrievabilityUrl string
-		var minRetrievability float64
-		for urlRows.Next() {
-			var id int64
-			var u string
-			if err := urlRows.Scan(&id, &u); err != nil {
-				return nil, err
-			} else if recordRows, err := s.db.Query("SELECT time FROM record WHERE url_id=? ORDER BY time;", id); err != nil {
-				return nil, err
-			} else {
-				points := make([]time.Time, 0)
-				for recordRows.Next() {
-					var seconds int64
-					if err := recordRows.Scan(&seconds); err != nil {
-						return nil, err
-					} else {
-						points = append(points, time.Unix(seconds, 0))
+		defer s.close()
+		if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
+			return nil, err
+		} else {
+			now := time.Now()
+			var minRetrievabilityUrl string
+			var minRetrievability float64
+			for urlRows.Next() {
+				var id int64
+				var u string
+				if err := urlRows.Scan(&id, &u); err != nil {
+					return nil, err
+				} else if recordRows, err := s.db.Query("SELECT time FROM record WHERE url_id=? ORDER BY time;", id); err != nil {
+					return nil, err
+				} else {
+					points := make([]time.Time, 0)
+					for recordRows.Next() {
+						var seconds int64
+						if err := recordRows.Scan(&seconds); err != nil {
+							return nil, err
+						} else {
+							points = append(points, time.Unix(seconds, 0))
+						}
+					}
+					if recordRows.Err() != nil {
+						return nil, recordRows.Err()
+					} else if retrievability := fgt.GetRetrievability(points, now); minRetrievabilityUrl == "" || retrievability < minRetrievability {
+						minRetrievabilityUrl = u
+						minRetrievability = retrievability
 					}
 				}
-				if recordRows.Err() != nil {
-					return nil, recordRows.Err()
-				} else if retrievability := fgt.GetRetrievability(points, now); minRetrievabilityUrl == "" || retrievability < minRetrievability {
-					minRetrievabilityUrl = u
-					minRetrievability = retrievability
-				}
 			}
-		}
-		if urlRows.Err() != nil {
-			return nil, urlRows.Err()
-		} else {
-			return url.Parse(minRetrievabilityUrl)
+			if urlRows.Err() != nil {
+				return nil, urlRows.Err()
+			} else {
+				return url.Parse(minRetrievabilityUrl)
+			}
 		}
 	}
 }
@@ -121,24 +132,27 @@ func (s *Sqlite) Select() (*url.URL, error) {
 func (s *Sqlite) Delete(u *url.URL) error {
 	if err := s.connect(); err != nil {
 		return err
-	} else if tx, err := s.db.Begin(); err != nil {
-		return err
-	} else if _, err := tx.Exec(
-		"DELETE FROM record WHERE url_id=(SELECT id FROM url WHERE url=?);",
-		u.String(),
-	); err != nil {
-		_ = tx.Rollback()
-		return err
-	} else if result, err := tx.Exec(
-		"DELETE FROM url WHERE url=?;",
-		u.String(),
-	); err != nil {
-		_ = tx.Rollback()
-		return err
-	} else if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
-		_ = tx.Rollback()
-		return fmt.Errorf("the url %s does not exist in the storage", u.String())
 	} else {
-		return tx.Commit()
+		defer s.close()
+		if tx, err := s.db.Begin(); err != nil {
+			return err
+		} else if _, err := tx.Exec(
+			"DELETE FROM record WHERE url_id=(SELECT id FROM url WHERE url=?);",
+			u.String(),
+		); err != nil {
+			_ = tx.Rollback()
+			return err
+		} else if result, err := tx.Exec(
+			"DELETE FROM url WHERE url=?;",
+			u.String(),
+		); err != nil {
+			_ = tx.Rollback()
+			return err
+		} else if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
+			_ = tx.Rollback()
+			return fmt.Errorf("the url %s does not exist in the storage", u.String())
+		} else {
+			return tx.Commit()
+		}
 	}
 }
