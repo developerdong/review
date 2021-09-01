@@ -6,6 +6,7 @@ import (
 	"github.com/developerdong/review/sql"
 	"net/url"
 	"os"
+	"strings"
 )
 
 const help = `
@@ -20,9 +21,12 @@ example:
 func main() {
 	// init the storage instance
 	var storage sql.Storage
-	switch driverName := conf.GetEnv(conf.DriverName); driverName {
+	switch driverName := strings.TrimSpace(conf.GetEnv(conf.DriverName)); driverName {
 	case sql.SqliteDriverName:
 		storage = new(sql.Sqlite)
+	case "":
+		fmt.Println("the name of sql driver should be set in the environment")
+		os.Exit(1)
 	default:
 		fmt.Printf("the driver name %s is unsupported\n", driverName)
 		os.Exit(1)
