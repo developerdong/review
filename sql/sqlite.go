@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const DriverName = "sqlite"
+const SqliteDriverName = "sqlite"
 
 const tableUrl = `CREATE TABLE IF NOT EXISTS url
 (
@@ -33,9 +33,9 @@ type Sqlite struct {
 // connect opens the connection to the database set by the environment variables,
 // and creates the needed tables if not exist.
 func (s *Sqlite) connect() error {
-	if driverName := conf.GetEnv(conf.DriverName); driverName != DriverName {
+	if driverName := conf.GetEnv(conf.DriverName); driverName != SqliteDriverName {
 		return errors.New("the database should be sqlite")
-	} else if db, err := sql.Open(DriverName, conf.GetEnv(conf.DataSourceName)); err != nil {
+	} else if db, err := sql.Open(SqliteDriverName, conf.GetEnv(conf.DataSourceName)); err != nil {
 		return err
 	} else if err := db.Ping(); err != nil {
 		return err
