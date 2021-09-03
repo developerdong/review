@@ -11,10 +11,10 @@ func TestSqlite(t *testing.T) {
 		t.Fatal(err)
 	} else if err := s.Insert(u); err != nil {
 		t.Error(err)
-	} else if urlNeedReview, err := s.Select(); err != nil {
+	} else if urlNeedReview, minRetrievability, err := s.Select(); err != nil {
 		t.Error(err)
 	} else {
-		t.Log(urlNeedReview)
+		t.Log(urlNeedReview, minRetrievability)
 		if err := s.Delete(u); err != nil {
 			t.Error(err)
 		}

@@ -48,11 +48,11 @@ func main() {
 				os.Exit(1)
 			}
 		case "select":
-			if u, err := storage.Select(); err != nil {
+			if u, r, err := storage.Select(); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			} else {
-				fmt.Println(u.String())
+				fmt.Println(u.String(), r)
 			}
 		case "delete":
 			if u, err := url.Parse(os.Args[2]); err != nil {

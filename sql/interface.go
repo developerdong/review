@@ -6,7 +6,7 @@ type Storage interface {
 	// Insert logs a new reading record.
 	Insert(*url.URL) error
 	// Select gets the url with the lowest retrievability of memory.
-	Select() (*url.URL, error)
+	Select() (*url.URL, float64, error)
 	// Delete will remove an url permanently from the storage.
 	Delete(*url.URL) error
 }

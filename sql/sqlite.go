@@ -84,13 +84,13 @@ func (s *Sqlite) Insert(u *url.URL) error {
 	}
 }
 
-func (s *Sqlite) Select() (*url.URL, error) {
+func (s *Sqlite) Select() (*url.URL, float64, error) {
 	if err := s.connect(); err != nil {
-		return nil, err
+		return nil, 0, err
 	} else {
 		defer s.close()
 		if urlRows, err := s.db.Query("SELECT id, url FROM url;"); err != nil {
-			return nil, err
+			return nil, 0, err
 		} else {
 			now := time.Now()
 			var minRetrievabilityUrl string
@@ -99,21 +99,21 @@ func (s *Sqlite) Select() (*url.URL, error) {
 				var id int64
 				var u string
 				if err := urlRows.Scan(&id, &u); err != nil {
-					return nil, err
+					return nil, 0, err
 				} else if recordRows, err := s.db.Query("SELECT time FROM record WHERE url_id=? ORDER BY time;", id); err != nil {
-					return nil, err
+					return nil, 0, err
 				} else {
 					points := make([]time.Time, 0)
 					for recordRows.Next() {
 						var seconds int64
 						if err := recordRows.Scan(&seconds); err != nil {
-							return nil, err
+							return nil, 0, err
 						} else {
 							points = append(points, time.Unix(seconds, 0))
 						}
 					}
 					if recordRows.Err() != nil {
-						return nil, recordRows.Err()
+						return nil, 0, recordRows.Err()
 					} else if retrievability := fgt.GetRetrievability(points, now); minRetrievabilityUrl == "" || retrievability < minRetrievability {
 						minRetrievabilityUrl = u
 						minRetrievability = retrievability
@@ -121,9 +121,11 @@ func (s *Sqlite) Select() (*url.URL, error) {
 				}
 			}
 			if urlRows.Err() != nil {
-				return nil, urlRows.Err()
+				return nil, 0, urlRows.Err()
+			} else if u, err := url.Parse(minRetrievabilityUrl); err != nil {
+				return nil, 0, err
 			} else {
-				return url.Parse(minRetrievabilityUrl)
+				return u, minRetrievability, nil
 			}
 		}
 	}
