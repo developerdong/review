@@ -1,5 +1,5 @@
 /*
-Package `fgt` is the abbreviation for `forget`,
+Package fgt is the abbreviation for `forget`,
 which is for computing the remaining rate of knowledge.
 */
 package fgt
