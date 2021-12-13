@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/developerdong/review/conf"
 	"github.com/developerdong/review/fgt"
@@ -122,6 +123,8 @@ func (s *Sqlite) Select() (*url.URL, float64, error) {
 			}
 			if urlRows.Err() != nil {
 				return nil, 0, urlRows.Err()
+			} else if minRetrievabilityUrl == "" {
+				return nil, 0, errors.New("there is no record in the storage")
 			} else if u, err := url.Parse(minRetrievabilityUrl); err != nil {
 				return nil, 0, err
 			} else {
