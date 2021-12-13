@@ -12,6 +12,13 @@ import (
 const help = `
 usage:
 	review <insert|select|delete> [url]
+description:
+	insert
+		Insert a reading record of the url.
+	select
+		Select the reading record with lowest retrievability.
+	delete
+		Delete all reading records of the url.
 example:
 	review insert https://www.google.com
 	review select
