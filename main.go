@@ -11,17 +11,20 @@ import (
 
 const help = `
 usage:
-	review <insert|select|delete> [url]
+	review <insert|select|next|delete> [url]
 description:
 	insert
 		Insert a reading record of the url.
 	select
 		Select the reading record with lowest retrievability.
+	next
+		Insert a reading record of the url with lowest retrievability, then select a new lowest one.
 	delete
 		Delete all reading records of the url.
 example:
 	review insert https://www.google.com
 	review select
+	review next
 	review delete https://www.google.com
 `
 
@@ -52,7 +55,7 @@ func main() {
 		Fatalf("the driver name %s is unsupported\n", driverName)
 	}
 	// execute commands
-	if !((len(os.Args) == 2 && os.Args[1] == "select") || (len(os.Args) == 3 && (os.Args[1] == "insert" || os.Args[1] == "delete"))) {
+	if !((len(os.Args) == 2 && (os.Args[1] == "select" || os.Args[1] == "next")) || (len(os.Args) == 3 && (os.Args[1] == "insert" || os.Args[1] == "delete"))) {
 		// the format of input is incorrect
 		Fatal(help)
 	} else {
@@ -66,6 +69,16 @@ func main() {
 			}
 		case "select":
 			if u, r, err := storage.Select(); err != nil {
+				Fatalln(err)
+			} else {
+				fmt.Println(u.String(), r)
+			}
+		case "next":
+			if oldLowest, _, err := storage.Select(); err != nil {
+				Fatalln(err)
+			} else if err := storage.Insert(oldLowest); err != nil {
+				Fatalln(err)
+			} else if u, r, err := storage.Select(); err != nil {
 				Fatalln(err)
 			} else {
 				fmt.Println(u.String(), r)
