@@ -152,7 +152,7 @@ func (s *Sqlite) Delete(u *url.URL) error {
 			return err
 		} else if rowsAffected, _ := result.RowsAffected(); rowsAffected != 1 {
 			_ = tx.Rollback()
-			return fmt.Errorf("the url %s does not exist in the storage", u.String())
+			return fmt.Errorf("the url %s does not exist in the storage", u)
 		} else {
 			return tx.Commit()
 		}

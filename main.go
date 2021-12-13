@@ -71,7 +71,7 @@ func main() {
 			if u, r, err := storage.Select(); err != nil {
 				Fatalln(err)
 			} else {
-				fmt.Println(u.String(), r)
+				fmt.Println(u, r)
 			}
 		case "next":
 			if oldLowest, _, err := storage.Select(); err != nil {
@@ -81,7 +81,7 @@ func main() {
 			} else if u, r, err := storage.Select(); err != nil {
 				Fatalln(err)
 			} else {
-				fmt.Println(u.String(), r)
+				fmt.Println(u, r)
 			}
 		case "delete":
 			if u, err := url.Parse(os.Args[2]); err != nil {
