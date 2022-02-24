@@ -74,15 +74,19 @@ func main() {
 				fmt.Println(u, r)
 			}
 		case "next":
-			if oldLowest, _, err := storage.Select(); err != nil {
+			oldU, oldR, err := storage.Select()
+			if err != nil {
 				Fatalln(err)
-			} else if err := storage.Insert(oldLowest); err != nil {
-				Fatalln(err)
-			} else if u, r, err := storage.Select(); err != nil {
-				Fatalln(err)
-			} else {
-				fmt.Println(u, r)
 			}
+			fmt.Println("Old:", oldU, oldR)
+			if err = storage.Insert(oldU); err != nil {
+				Fatalln(err)
+			}
+			u, r, err := storage.Select()
+			if err != nil {
+				Fatalln(err)
+			}
+			fmt.Println("New:", u, r)
 		case "delete":
 			if u, err := url.Parse(os.Args[2]); err != nil {
 				Fatalln(err)
