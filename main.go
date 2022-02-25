@@ -6,6 +6,7 @@ import (
 	"github.com/developerdong/review/sql"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -78,15 +79,26 @@ func main() {
 			if err != nil {
 				Fatalln(err)
 			}
-			fmt.Println("Old:", oldU, oldR)
 			if err = storage.Insert(oldU); err != nil {
+				// If encounter error, at least print the old URL.
+				fmt.Println(oldU, oldR, "(old)")
 				Fatalln(err)
 			}
-			u, r, err := storage.Select()
+			newU, newR, err := storage.Select()
 			if err != nil {
+				// If encounter error, at least print the old URL.
+				fmt.Println(oldU, oldR, "(old)")
 				Fatalln(err)
 			}
-			fmt.Println("New:", u, r)
+			// Print aligned URLs.
+			oldStr, newStr := oldU.String(), newU.String()
+			alignLen := len(oldStr)
+			if len(newStr) > alignLen {
+				alignLen = len(newStr)
+			}
+			alignLenStr := strconv.Itoa(alignLen)
+			fmt.Printf("%-"+alignLenStr+"s %f (old)\n", oldStr, oldR)
+			fmt.Printf("%-"+alignLenStr+"s %f (new)\n", newStr, newR)
 		case "delete":
 			if u, err := url.Parse(os.Args[2]); err != nil {
 				Fatalln(err)
