@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/developerdong/review/conf"
-	"github.com/developerdong/review/sql"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/developerdong/review/conf"
+	"github.com/developerdong/review/sql"
 )
 
 const help = `
@@ -19,7 +19,7 @@ description:
 	select
 		Select the reading record with lowest retrievability.
 	next
-		Insert a reading record of the url with lowest retrievability, then select a new lowest one.
+		Insert a reading record of the previously selected url, if any, then do select again.
 	delete
 		Delete all reading records of the url.
 example:
@@ -75,37 +75,30 @@ func main() {
 			} else if err := storage.Insert(u); err != nil {
 				Fatalln(err)
 			}
+		case "next":
+			// Read the previously selected url from file.
+			urlFileContent, err := os.ReadFile(conf.GetEnv(conf.URLFilePath))
+			if err != nil {
+				Fatalln(err)
+			}
+			u, err := url.Parse(string(urlFileContent))
+			if err != nil {
+				Fatalln(err)
+			}
+			if err = storage.Insert(u); err != nil {
+				Fatalln(err)
+			}
+			fallthrough
 		case "select":
 			u, r, err := storage.Select()
 			if err != nil {
 				Fatalln(err)
 			}
+			// Log the selected url.
+			if err = os.WriteFile(conf.GetEnv(conf.URLFilePath), []byte(u.String()), 0644); err != nil {
+				Fatalln(err)
+			}
 			fmt.Println(u, r)
-		case "next":
-			oldU, oldR, err := storage.Select()
-			if err != nil {
-				Fatalln(err)
-			}
-			if err = storage.Insert(oldU); err != nil {
-				// If encounter error, at least print the old URL.
-				fmt.Println(oldU, oldR, "(old)")
-				Fatalln(err)
-			}
-			newU, newR, err := storage.Select()
-			if err != nil {
-				// If encounter error, at least print the old URL.
-				fmt.Println(oldU, oldR, "(old)")
-				Fatalln(err)
-			}
-			// Print aligned URLs.
-			oldStr, newStr := oldU.String(), newU.String()
-			alignLen := len(oldStr)
-			if len(newStr) > alignLen {
-				alignLen = len(newStr)
-			}
-			alignLenStr := strconv.Itoa(alignLen)
-			fmt.Printf("%-"+alignLenStr+"s %f (old)\n", oldStr, oldR)
-			fmt.Printf("%-"+alignLenStr+"s %f (new)\n", newStr, newR)
 		case "delete":
 			if u, err := url.Parse(os.Args[2]); err != nil {
 				Fatalln(err)
