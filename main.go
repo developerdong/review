@@ -76,11 +76,11 @@ func main() {
 				Fatalln(err)
 			}
 		case "select":
-			if u, r, err := storage.Select(); err != nil {
+			u, r, err := storage.Select()
+			if err != nil {
 				Fatalln(err)
-			} else {
-				fmt.Println(u, r)
 			}
+			fmt.Println(u, r)
 		case "next":
 			oldU, oldR, err := storage.Select()
 			if err != nil {
