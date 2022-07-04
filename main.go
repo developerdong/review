@@ -29,6 +29,11 @@ example:
 	review delete https://www.google.com
 `
 
+var (
+	// The back-end implementation of storage.
+	storage sql.Storage
+)
+
 func Fatal(v ...interface{}) {
 	fmt.Print(v...)
 	os.Exit(1)
@@ -44,9 +49,8 @@ func Fatalln(v ...interface{}) {
 	os.Exit(1)
 }
 
-func main() {
-	// init the storage instance
-	var storage sql.Storage
+func init() {
+	// Init the storage instance.
 	switch driverName := strings.TrimSpace(conf.GetEnv(conf.DriverName)); driverName {
 	case sql.SqliteDriverName:
 		storage = new(sql.Sqlite)
@@ -55,6 +59,9 @@ func main() {
 	default:
 		Fatalf("the driver name %s is unsupported\n", driverName)
 	}
+}
+
+func main() {
 	// execute commands
 	if !((len(os.Args) == 2 && (os.Args[1] == "select" || os.Args[1] == "next")) || (len(os.Args) == 3 && (os.Args[1] == "insert" || os.Args[1] == "delete"))) {
 		// the format of input is incorrect
