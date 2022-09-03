@@ -76,26 +76,28 @@ func main() {
 				Fatalln(err)
 			}
 		case "next":
-			// Read the previously selected url from file.
-			urlFileContent, err := os.ReadFile(conf.GetEnv(conf.URLFilePath))
-			if err != nil {
-				Fatalln(err)
-			}
-			u, err := url.Parse(string(urlFileContent))
+			u, _, err := storage.Select()
 			if err != nil {
 				Fatalln(err)
 			}
 			if err = storage.Insert(u); err != nil {
 				Fatalln(err)
 			}
+			// Log the inserted url.
+			f, err := os.OpenFile(conf.GetEnv(conf.URLFilePath), os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+			if err != nil {
+				Fatalln(err)
+			}
+			defer func(f *os.File) {
+				_ = f.Close()
+			}(f)
+			if _, err = f.WriteString(u.String()); err != nil {
+				Fatalln(err)
+			}
 			fallthrough
 		case "select":
 			u, r, err := storage.Select()
 			if err != nil {
-				Fatalln(err)
-			}
-			// Log the selected url.
-			if err = os.WriteFile(conf.GetEnv(conf.URLFilePath), []byte(u.String()), 0644); err != nil {
 				Fatalln(err)
 			}
 			fmt.Println(u, r)
