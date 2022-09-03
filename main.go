@@ -91,7 +91,7 @@ func main() {
 			defer func(f *os.File) {
 				_ = f.Close()
 			}(f)
-			if _, err = f.WriteString(u.String()); err != nil {
+			if _, err = f.WriteString(u.String() + "\n"); err != nil {
 				Fatalln(err)
 			}
 			fallthrough
