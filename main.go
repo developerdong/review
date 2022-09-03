@@ -19,7 +19,7 @@ description:
 	select
 		Select the reading record with lowest retrievability.
 	next
-		Insert a reading record of the previously selected url, if any, then do select again.
+		Insert a reading record of the previously selected url with lowest retrievability, then do select again.
 	delete
 		Delete all reading records of the url.
 example:
